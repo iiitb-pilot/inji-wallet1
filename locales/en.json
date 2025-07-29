@@ -164,7 +164,7 @@
   },
   "SettingScreen": {
     "header": "Settings",
-    "injiAsVerifierApp": "Inji as verifier app",
+    "injiAsVerifierApp": "INJI AS VERFIER APPLICATION",
     "receiveCard": "Receive Card",
     "basicSettings": "Basic settings",
     "bioUnlock": "Unlock with Biometric",
@@ -411,9 +411,9 @@
   },
   "MyVcsTab": {
     "searchByName": "Search",
-    "bringYourDigitalID": "Bring your digital identity",
-    "generateVcDescription": "Tap on \"Download card\" below to download your card",
-    "generateVcFABDescription": "Tap on  \"+\" below to download your card",
+    "bringYourDigitalID": "Ready to receive identity",
+   
+    "generateVcFABDescription": "Tap 'Receive Card' to proceed with verifying the credential",
     "downloadCard": "Download Card",
     "downloadingYourCard": "Downloading your card, this can take upto 5 minutes",
     "downloadingVcSuccess": "Your Card has been downloaded successfully",
@@ -491,7 +491,7 @@
     "error": "Sorry, we are unable to verify the {{vcDetails}} right now. Please try again later. Until then, you won't be able to activate or share your card."
   },
   "ViewVcModal": {
-    "title": "ID Details",
+    "title": "BANK DETAILS",
     "inProgress": "In Progress",
     "statusToolTipContent": {
       "valid": {
