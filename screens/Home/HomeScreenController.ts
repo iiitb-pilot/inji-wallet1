@@ -1,7 +1,8 @@
-import {useInterpret, useSelector} from '@xstate/react';
-import {useContext, useEffect, useRef} from 'react';
-import {HomeRouteProps} from '../../routes/routeTypes';
-import {GlobalContext} from '../../shared/GlobalContext';
+
+import { useInterpret, useSelector } from '@xstate/react';
+import { useContext, useEffect, useRef } from 'react';
+import { HomeRouteProps } from '../../routes/routeTypes';
+import { GlobalContext } from '../../shared/GlobalContext';
 import {
   HomeScreenEvents,
   HomeScreenMachine,
@@ -13,11 +14,11 @@ import {
   selectIssuersMachine,
   selectIsMinimumStorageLimitReached,
 } from './HomeScreenMachine';
-import {selectVc} from '../../machines/VerifiableCredential/VCItemMachine/VCItemSelectors';
+import { selectVc } from '../../machines/VerifiableCredential/VCItemMachine/VCItemSelectors';
 
 let homeMachineService;
 function useCreateHomeMachineService() {
-  const {appService} = useContext(GlobalContext);
+  const { appService } = useContext(GlobalContext);
   const machine = useRef(
     HomeScreenMachine.withContext({
       ...HomeScreenMachine.context,
@@ -56,6 +57,9 @@ export function useHomeScreen(props: HomeRouteProps) {
     DISMISS: () => service.send(HomeScreenEvents.DISMISS()),
     GOTO_ISSUERS: () => service.send(HomeScreenEvents.GOTO_ISSUERS()),
     DISMISS_MODAL: () => service.send(HomeScreenEvents.DISMISS_MODAL()),
+    RECEIVE_CARD: () => {
+      props.navigation.navigate('Request'); // Matches SettingsScreen's RECEIVE_CARD
+    },
   };
 
   function SELECT_TAB(index: number) {
