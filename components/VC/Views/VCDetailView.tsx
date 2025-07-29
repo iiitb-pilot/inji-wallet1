@@ -1,6 +1,6 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {Image, ImageBackground, View} from 'react-native';
+import {Image, ImageBackground, TextInput, View} from 'react-native';
 import {
   Credential,
   CredentialWrapper,
@@ -11,16 +11,15 @@ import {
 import {Button, Column, Row, Text} from '../../ui';
 import {Theme} from '../../ui/styleUtils';
 import {QrCodeOverlay} from '../../QrCodeOverlay';
-import {SvgImage} from '../../ui/svg';
-import {isActivationNeeded} from '../../../shared/openId4VCI/Utils';
+import {ProfileIcon} from '../../ProfileIcon';
 import {
   BOTTOM_SECTION_FIELDS_WITH_DETAILED_ADDRESS_FIELDS,
   DETAIL_VIEW_BOTTOM_SECTION_FIELDS,
   Display,
   KEY_TYPE_FIELD,
-  fieldItemIterator,
+  getFieldName,
+  getFieldValue,
 } from '../common/VCUtils';
-import {ProfileIcon} from '../../ProfileIcon';
 import {VCFormat} from '../../../shared/VCFormat';
 import {VCItemField} from '../common/VCItemField';
 
@@ -40,47 +39,77 @@ const getProfileImage = (face: any) => {
 
 export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
   const {t} = useTranslation('VcDetails');
-  const logo = props.verifiableCredentialData.issuerLogo;
-  const face = props.verifiableCredentialData.face;
-  const verifiableCredential = props.credential;
+  const {verifiableCredentialData, credential, keyType} = props;
+  const logo = verifiableCredentialData.issuerLogo;
+  const face = verifiableCredentialData.face;
   const wellknownDisplayProperty = new Display(props.wellknown);
+
+  const isReceived = props.isReceived ?? !verifiableCredentialData?.isFromWallet;
 
   const shouldShowHrLine = verifiableCredential => {
     let availableFieldNames: string[] = [];
-    if (props.verifiableCredentialData.vcMetadata.format === VCFormat.ldp_vc) {
-      availableFieldNames = Object.keys(
-        verifiableCredential?.credentialSubject,
-      );
-    } else if (
-      props.verifiableCredentialData.vcMetadata.format === VCFormat.mso_mdoc
-    ) {
+    if (verifiableCredentialData.vcMetadata.format === VCFormat.ldp_vc) {
+      availableFieldNames = Object.keys(verifiableCredential?.credentialSubject);
+    } else if (verifiableCredentialData.vcMetadata.format === VCFormat.mso_mdoc) {
       const namespaces = verifiableCredential['issuerSigned']['nameSpaces'];
       Object.keys(namespaces).forEach(namespace => {
         (namespaces[namespace] as Array<Object>).forEach(element => {
-          availableFieldNames.push(
-            `${namespace}~${element['elementIdentifier']}`,
-          );
+          availableFieldNames.push(`${namespace}~${element['elementIdentifier']}`);
         });
       });
     }
-    for (const fieldName of availableFieldNames) {
-      if (
-        BOTTOM_SECTION_FIELDS_WITH_DETAILED_ADDRESS_FIELDS.includes(fieldName)
-      ) {
-        return true;
-      }
-    }
-
-    return false;
+    return availableFieldNames.some(fieldName =>
+      BOTTOM_SECTION_FIELDS_WITH_DETAILED_ADDRESS_FIELDS.includes(fieldName),
+    );
   };
 
+  const renderReadOnlyField = (field: string, value: any) => (
+    <Column key={field} margin="8 0">
+      <Text style={{fontWeight: 'bold', marginBottom: 4}}>
+        {field}
+      </Text>
+      <TextInput
+        value={value}
+        editable={false}
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          borderRadius: 6,
+          padding: 10,
+          backgroundColor: '#f5f5f5',
+          color: '#333',
+        }}
+      />
+    </Column>
+  );
+
   return (
-    <>
-      <Column scroll>
-        <Column fill>
-          <Column
-            padding="10 10 3 10"
-            backgroundColor={Theme.Colors.DetailedViewBackground}>
+    <Column scroll>
+      <Column fill>
+        {isReceived ? (
+          <Column padding="10" backgroundColor={Theme.Colors.DetailedViewBackground}>
+            {props.fields.map(field => {
+              const fieldName = getFieldName(
+                field,
+                props.wellknown,
+                verifiableCredentialData.vcMetadata.format,
+              );
+              const fieldValue = getFieldValue(
+                credential,
+                field,
+                props.wellknown,
+                props,
+                wellknownDisplayProperty,
+                verifiableCredentialData.vcMetadata.format,
+              );
+              if (!fieldValue) return null;
+              return renderReadOnlyField(fieldName, fieldValue);
+            })}
+            {/* Key Type Field */}
+            {renderReadOnlyField(KEY_TYPE_FIELD, keyType)}
+          </Column>
+        ) : (
+          <Column padding="10 10 3 10" backgroundColor={Theme.Colors.DetailedViewBackground}>
             <ImageBackground
               imageStyle={Theme.Styles.vcDetailBg}
               resizeMethod="scale"
@@ -89,23 +118,15 @@ export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
                 Theme.Styles.openCardBgContainer,
                 wellknownDisplayProperty.getBackgroundColor(),
               ]}
-              source={wellknownDisplayProperty.getBackgroundImage(
-                Theme.OpenCard,
-              )}>
-              <Row padding="14 14 0 14" margin="0 0 0 0">
+              source={wellknownDisplayProperty.getBackgroundImage(Theme.OpenCard)}>
+              <Row padding="14 14 0 14">
                 <Column crossAlign="center">
                   {getProfileImage(face)}
                   <QrCodeOverlay
-                    verifiableCredential={
-                      props.credentialWrapper as unknown as VerifiableCredential
-                    }
-                    meta={props.verifiableCredentialData.vcMetadata}
+                    verifiableCredential={props.credentialWrapper as unknown as VerifiableCredential}
+                    meta={verifiableCredentialData.vcMetadata}
                   />
-                  <Column
-                    width={80}
-                    height={59}
-                    crossAlign="center"
-                    margin="12 0 0 0">
+                  <Column width={80} height={59} crossAlign="center" margin="12 0 0 0">
                     <Image
                       src={logo?.url}
                       alt={logo?.alt_text}
@@ -115,132 +136,46 @@ export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
                     />
                   </Column>
                 </Column>
-                <Column
-                  align="space-evenly"
-                  margin={'0 0 0 24'}
-                  style={{flex: 1}}>
-                  {fieldItemIterator(
-                    props.fields,
-                    verifiableCredential,
-                    props.wellknown,
-                    wellknownDisplayProperty,
-                    props,
-                  )}
+                <Column align="space-evenly" margin="0 0 0 24" style={{flex: 1}}>
+                  {/* Not shown here since it's not a received card */}
                 </Column>
               </Row>
-              <>
-                <View
-                  style={[
-                    Theme.Styles.hrLine,
-                    {
-                      borderBottomColor: wellknownDisplayProperty.getTextColor(
-                        Theme.Styles.hrLine.borderBottomColor,
-                      ),
-                    },
-                  ]}></View>
-                <Column padding="0 14 14 14">
-                  {shouldShowHrLine(verifiableCredential) &&
-                    fieldItemIterator(
-                      DETAIL_VIEW_BOTTOM_SECTION_FIELDS,
-                      verifiableCredential,
+              <View
+                style={[
+                  Theme.Styles.hrLine,
+                  {
+                    borderBottomColor: wellknownDisplayProperty.getTextColor(
+                      Theme.Styles.hrLine.borderBottomColor,
+                    ),
+                  },
+                ]}
+              />
+              <Column padding="0 14 14 14">
+                {shouldShowHrLine(credential) &&
+                  DETAIL_VIEW_BOTTOM_SECTION_FIELDS.map(field => {
+                    const fieldName = getFieldName(
+                      field,
                       props.wellknown,
-                      wellknownDisplayProperty,
+                      verifiableCredentialData.vcMetadata.format,
+                    );
+                    const fieldValue = getFieldValue(
+                      credential,
+                      field,
+                      props.wellknown,
                       props,
-                    )}
-                  <VCItemField
-                    key={'keyTypeVcDetailView'}
-                    fieldName={KEY_TYPE_FIELD}
-                    fieldValue={props.keyType}
-                    testID={'keyTypeVcDetailView'}
-                  />
-                </Column>
-              </>
+                      wellknownDisplayProperty,
+                      verifiableCredentialData.vcMetadata.format,
+                    );
+                    if (!fieldValue) return null;
+                    return renderReadOnlyField(fieldName, fieldValue);
+                  })}
+                {renderReadOnlyField(KEY_TYPE_FIELD, keyType)}
+              </Column>
             </ImageBackground>
           </Column>
-        </Column>
-      </Column>
-      {props.vcHasImage &&
-        !props.verifiableCredentialData?.vcMetadata.isExpired && (
-          <View
-            style={{
-              position: 'relative',
-              backgroundColor: Theme.Colors.DetailedViewBackground,
-            }}>
-            {props.activeTab !== 1 &&
-              (!props.walletBindingResponse &&
-              isActivationNeeded(props.verifiableCredentialData?.issuer) ? (
-                <Column
-                  padding="10"
-                  style={Theme.Styles.detailedViewActivationPopupContainer}>
-                  <Row>
-                    <Column crossAlign="flex-start" margin={'2 0 0 10'}>
-                      {SvgImage.WalletUnActivatedLargeIcon()}
-                    </Column>
-                    <Column crossAlign="flex-start" margin={'5 18 13 8'}>
-                      <Text
-                        testID="offlineAuthDisabledHeader"
-                        style={{
-                          fontFamily: 'Inter_600SemiBold',
-                          fontSize: 14,
-                        }}
-                        color={Theme.Colors.statusLabel}
-                        margin={'0 18 0 0'}>
-                        {t('offlineAuthDisabledHeader')}
-                      </Text>
-                      <Text
-                        testID="offlineAuthDisabledMessage"
-                        style={{
-                          fontFamily: 'Inter_400Regular',
-                          fontSize: 12,
-                        }}
-                        color={Theme.Colors.statusMessage}
-                        margin={'0 18 0 0'}>
-                        {t('offlineAuthDisabledMessage')}
-                      </Text>
-                    </Column>
-                  </Row>
-
-                  <Button
-                    testID="enableVerification"
-                    title={t('enableVerification')}
-                    onPress={props.onBinding}
-                    type="gradient"
-                    size="Large"
-                    disabled={
-                      !props.verifiableCredentialData.vcMetadata.isVerified
-                    }
-                  />
-                </Column>
-              ) : (
-                <Column
-                  style={Theme.Styles.detailedViewActivationPopupContainer}
-                  padding="10">
-                  <Row>
-                    <Column crossAlign="flex-start" margin={'2 0 0 10'}>
-                      {SvgImage.WalletActivatedLargeIcon()}
-                    </Column>
-                    <Column crossAlign="flex-start" margin={'5 18 13 8'}>
-                      <Text
-                        testID="profileAuthenticated"
-                        color={Theme.Colors.statusLabel}
-                        style={{
-                          fontFamily: 'Inter_600SemiBold',
-                          fontSize: 14,
-                        }}
-                        margin={'0 18 0 0'}>
-                        {isActivationNeeded(
-                          props.verifiableCredentialData?.issuer,
-                        )
-                          ? t('profileAuthenticated')
-                          : t('credentialActivated')}
-                      </Text>
-                    </Column>
-                  </Row>
-                </Column>
-              ))}
-          </View>
         )}
-    </>
+      </Column>
+    </Column>
   );
 };
 
@@ -255,4 +190,5 @@ export interface VCItemDetailsProps {
   activeTab?: Number;
   vcHasImage: boolean;
   keyType: string;
+  isReceived?: boolean;
 }
