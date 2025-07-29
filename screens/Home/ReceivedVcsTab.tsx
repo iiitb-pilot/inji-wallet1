@@ -29,7 +29,7 @@ export const ReceivedVcsTab: React.FC<HomeScreenTabProps> = props => {
             key={vcMetadata.getVcKey()}
             vcMetadata={vcMetadata}
             margin="0 2 8 2"
-            onPress={controller.VIEW_VC}
+            onPress={() => props.onCardPress(vcMetadata)} 
             flow={VCItemContainerFlowType.VC_SHARE}
           />
         ))}
