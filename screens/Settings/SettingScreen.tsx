@@ -1,27 +1,27 @@
+
 import React from 'react';
-import {Platform, Pressable} from 'react-native';
-import {Icon, ListItem, Switch} from 'react-native-elements';
-import {Column, Row, Text} from '../../components/ui';
-import {Theme} from '../../components/ui/styleUtils';
-import {MessageOverlay} from '../../components/MessageOverlay';
-import {useSettingsScreen} from './SettingScreenController';
-import {useTranslation} from 'react-i18next';
-import {LanguageSelector} from '../../components/LanguageSelector';
-import {ScrollView} from 'react-native-gesture-handler';
-import {Modal} from '../../components/ui/Modal';
-import {CREDENTIAL_REGISTRY_EDIT} from 'react-native-dotenv';
-import {AboutInji} from './AboutInji';
-import {EditableListItem} from '../../components/EditableListItem';
-import {RequestRouteProps, RootRouteProps} from '../../routes';
-import {ReceivedCards} from './ReceivedCards';
+import { Platform, Pressable } from 'react-native';
+import { Icon, ListItem, Switch } from 'react-native-elements';
+import { Column, Row, Text } from '../../components/ui';
+import { Theme } from '../../components/ui/styleUtils';
+import { MessageOverlay } from '../../components/MessageOverlay';
+import { useSettingsScreen } from './SettingScreenController';
+import { useTranslation } from 'react-i18next';
+import { LanguageSelector } from '../../components/LanguageSelector';
+import { ScrollView } from 'react-native-gesture-handler';
+import { Modal } from '../../components/ui/Modal';
+import { CREDENTIAL_REGISTRY_EDIT } from 'react-native-dotenv';
+import { AboutInji } from './AboutInji';
+import { EditableListItem } from '../../components/EditableListItem';
+import { RequestRouteProps, RootRouteProps } from '../../routes';
 import testIDProps from '../../shared/commonUtil';
-import {SvgImage} from '../../components/ui/svg';
-import {DataBackupAndRestore} from './DataBackupAndRestore';
-import {BannerNotificationContainer} from '../../components/BannerNotificationContainer';
-import {SettingsKeyManagementScreen} from './SettingsKeyManagement';
+import { SvgImage } from '../../components/ui/svg';
+import { DataBackupAndRestore } from './DataBackupAndRestore';
+import { BannerNotificationContainer } from '../../components/BannerNotificationContainer';
+import { SettingsKeyManagementScreen } from './SettingsKeyManagement';
 
 const LanguageSetting: React.FC = () => {
-  const {t} = useTranslation('SettingScreen');
+  const { t } = useTranslation('SettingScreen');
 
   return (
     <LanguageSelector
@@ -31,7 +31,7 @@ const LanguageSetting: React.FC = () => {
           <ListItem.Content>
             <ListItem.Title
               {...testIDProps('languageTitle')}
-              style={{paddingTop: 3}}>
+              style={{ paddingTop: 3 }}>
               <Text weight="semibold" color={Theme.Colors.settingsLabel}>
                 {t('language')}
               </Text>
@@ -42,7 +42,7 @@ const LanguageSetting: React.FC = () => {
             name="chevron-right"
             size={21}
             color={Theme.Colors.chevronRightColor}
-            style={{marginRight: 15}}
+            style={{ marginRight: 15 }}
           />
         </ListItem>
       }
@@ -53,7 +53,7 @@ const LanguageSetting: React.FC = () => {
 export const SettingScreen: React.FC<
   SettingProps & RootRouteProps & RequestRouteProps
 > = props => {
-  const {t} = useTranslation('SettingScreen');
+  const { t } = useTranslation('SettingScreen');
   const controller = useSettingsScreen(props);
 
   const updateRegistry = items => {
@@ -80,46 +80,6 @@ export const SettingScreen: React.FC<
       </Pressable>
       <BannerNotificationContainer />
       <ScrollView {...testIDProps('settingsScreen')}>
-        <Column
-          style={{display: Platform.OS !== 'ios' ? 'flex' : 'none'}}
-          backgroundColor={Theme.Colors.lightGreyBackgroundColor}>
-          <Text
-            style={{paddingTop: 3}}
-            testID="injiAsVerifierApp"
-            weight="semibold"
-            margin="10"
-            color={Theme.Colors.aboutVersion}>
-            {t('injiAsVerifierApp')}
-          </Text>
-          <Row
-            align="space-evenly"
-            backgroundColor={Theme.Colors.whiteBackgroundColor}>
-            <Pressable
-              {...testIDProps('receiveCardPressableArea')}
-              onPress={controller.RECEIVE_CARD}>
-              <Column align="center" style={Theme.Styles.receiveCardsContainer}>
-                {SvgImage.ReceiveCard()}
-                <Text
-                  testID="receiveCard"
-                  margin="6"
-                  style={{paddingTop: 3}}
-                  weight="semibold">
-                  {t('receiveCard')}
-                </Text>
-              </Column>
-            </Pressable>
-
-            <ReceivedCards />
-          </Row>
-
-          <Text
-            weight="semibold"
-            style={{paddingTop: 3}}
-            margin="10"
-            color={Theme.Colors.aboutVersion}>
-            {t('basicSettings')}
-          </Text>
-        </Column>
         <Column fill>
           <MessageOverlay
             isVisible={controller.alertMsg != ''}
@@ -134,7 +94,7 @@ export const SettingScreen: React.FC<
             <ListItem.Content>
               <ListItem.Title
                 {...testIDProps('bioUnlock')}
-                style={{paddingTop: 3}}>
+                style={{ paddingTop: 3 }}>
                 <Text weight="semibold" color={Theme.Colors.settingsLabel}>
                   {t('bioUnlock')}
                 </Text>
@@ -195,7 +155,7 @@ export const SettingScreen: React.FC<
             <ListItem.Content>
               <ListItem.Title
                 {...testIDProps('injiTourGuide')}
-                style={{paddingTop: 3}}>
+                style={{ paddingTop: 3 }}>
                 <Text weight="semibold" color={Theme.Colors.settingsLabel}>
                   {t('injiTourGuide')}
                 </Text>
@@ -208,7 +168,7 @@ export const SettingScreen: React.FC<
             <ListItem.Content>
               <ListItem.Title
                 {...testIDProps('logout')}
-                style={{paddingTop: 3}}>
+                style={{ paddingTop: 3 }}>
                 <Text weight="semibold" color={Theme.Colors.settingsLabel}>
                   {t('logout')}
                 </Text>
