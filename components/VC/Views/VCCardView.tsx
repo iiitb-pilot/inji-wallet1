@@ -24,16 +24,17 @@ export const VCCardView: React.FC<VCItemProps> = props => {
   const verifiableCredentialData = controller.verifiableCredentialData;
   const generatedOn = -controller.generatedOn;
 
-  let formattedDate =
-    generatedOn && format(new Date(generatedOn), 'MM/dd/yyyy');
-
-  useEffect(() => {
-    controller.UPDATE_VC_METADATA(props.vcMetadata);
-  }, [props.vcMetadata]);
+  const formattedDate = generatedOn
+    ? format(new Date(generatedOn), 'MM/dd/yyyy')
+    : '';
 
   const [fields, setFields] = useState([]);
   const [wellknown, setWellknown] = useState(null);
   const [vc, setVc] = useState(null);
+
+  useEffect(() => {
+    controller.UPDATE_VC_METADATA(props.vcMetadata);
+  }, [props.vcMetadata]);
 
   useEffect(() => {
     async function loadVc() {
@@ -56,6 +57,7 @@ export const VCCardView: React.FC<VCItemProps> = props => {
       credentialConfigurationId,
       vcMetadata: {format},
     } = verifiableCredentialData;
+
     if (wellKnown) {
       getCredentialIssuersWellKnownConfig(
         issuer,
@@ -70,7 +72,7 @@ export const VCCardView: React.FC<VCItemProps> = props => {
         })
         .catch(error => {
           console.error(
-            'Error occurred while fetching wellknown for viewing VC ',
+            'Error fetching wellknown config for VC view:',
             error,
           );
         });
@@ -81,7 +83,7 @@ export const VCCardView: React.FC<VCItemProps> = props => {
     return <VCCardSkeleton />;
   }
 
-  const CardViewContent = props => (
+  const CardViewContent = () => (
     <VCCardViewContent
       vcMetadata={props.vcMetadata}
       context={controller.context}
@@ -95,7 +97,7 @@ export const VCCardView: React.FC<VCItemProps> = props => {
       selected={props.selected}
       service={service}
       isPinned={props.isPinned}
-      onPress={() => props.onPress(service)}
+      onPress={() => props.onPress?.(service)}
       isDownloading={props.isDownloading}
       flow={props.flow}
       isKebabPopUp={controller.isKebabPopUp}
@@ -105,36 +107,42 @@ export const VCCardView: React.FC<VCItemProps> = props => {
     />
   );
 
-  const wrapTopCard = props => (
+  const wrapTopCard = () => (
     <Copilot
       description={t('copilot:cardMessage')}
       order={6}
-      title={t('copilot:cardTitle')}
-      children={CardViewContent(props)}
-    />
+      title={t('copilot:cardTitle')}>
+      <CardViewContent />
+    </Copilot>
   );
 
   return (
-    <React.Fragment>
+    <>
       <Pressable
         accessible={false}
-        onPress={() => props.onPress(service)}
-        style={
-          props.selected
-            ? Theme.Styles.selectedBindedVc
-            : Theme.Styles.closeCardBgContainer
+          onPress={() => {
+            console.log('Card pressed'); // ✅ For debug
+            if (props.onPress) {
+              props.onPress(service);
+            }
+          }}
+          style={
+            props.selected
+              ? Theme.Styles.selectedBindedVc
+              : Theme.Styles.closeCardBgContainer
         }>
         {(props.isInitialLaunch || controller.isTourGuide) && props.isTopCard
-          ? wrapTopCard(props)
-          : CardViewContent(props)}
+          ? wrapTopCard()
+          : <CardViewContent />}
       </Pressable>
+
       <ErrorMessageOverlay
         isVisible={controller.isSavingFailedInIdle}
         error={controller.storeErrorTranslationPath}
         onDismiss={controller.DISMISS}
         translationPath={'VcDetails'}
       />
-    </React.Fragment>
+    </>
   );
 };
 
