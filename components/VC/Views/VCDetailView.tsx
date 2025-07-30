@@ -1,6 +1,7 @@
-import React from 'react';
-import {useTranslation} from 'react-i18next';
-import {Image, ImageBackground, TextInput, View} from 'react-native';
+
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Image, ImageBackground, TextInput, View } from 'react-native';
 import {
   Credential,
   CredentialWrapper,
@@ -8,25 +9,25 @@ import {
   VerifiableCredentialData,
   WalletBindingResponse,
 } from '../../../machines/VerifiableCredential/VCMetaMachine/vc';
-import {Button, Column, Row, Text} from '../../ui';
-import {Theme} from '../../ui/styleUtils';
-import {QrCodeOverlay} from '../../QrCodeOverlay';
-import {ProfileIcon} from '../../ProfileIcon';
+import { Button, Column, Row, Text } from '../../ui';
+import { Theme } from '../../ui/styleUtils';
+import { QrCodeOverlay } from '../../QrCodeOverlay';
+import { ProfileIcon } from '../../ProfileIcon';
 import {
   BOTTOM_SECTION_FIELDS_WITH_DETAILED_ADDRESS_FIELDS,
   DETAIL_VIEW_BOTTOM_SECTION_FIELDS,
   Display,
-  KEY_TYPE_FIELD,
   getFieldName,
   getFieldValue,
 } from '../common/VCUtils';
-import {VCFormat} from '../../../shared/VCFormat';
-import {VCItemField} from '../common/VCItemField';
+import { VCFormat } from '../../../shared/VCFormat';
+import { VCItemField } from '../common/VCItemField';
+import { VCVerification } from '../../VCVerification';
 
 const getProfileImage = (face: any) => {
   if (face) {
     return (
-      <Image source={{uri: face}} style={Theme.Styles.detailedViewImage} />
+      <Image source={{ uri: face }} style={Theme.Styles.detailedViewImage} />
     );
   }
   return (
@@ -38,38 +39,75 @@ const getProfileImage = (face: any) => {
 };
 
 export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
-  const {t} = useTranslation('VcDetails');
-  const {verifiableCredentialData, credential, keyType} = props;
+  const { t } = useTranslation('VcDetails');
+  const { verifiableCredentialData, credential } = props;
   const logo = verifiableCredentialData.issuerLogo;
   const face = verifiableCredentialData.face;
   const wellknownDisplayProperty = new Display(props.wellknown);
 
   const isReceived = props.isReceived ?? !verifiableCredentialData?.isFromWallet;
 
-  const shouldShowHrLine = verifiableCredential => {
+  const shouldShowHrLine = (verifiableCredential) => {
     let availableFieldNames: string[] = [];
+    console.log('Credential structure:', verifiableCredential);
     if (verifiableCredentialData.vcMetadata.format === VCFormat.ldp_vc) {
-      availableFieldNames = Object.keys(verifiableCredential?.credentialSubject);
+      availableFieldNames = Object.keys(verifiableCredential?.credentialSubject || {});
     } else if (verifiableCredentialData.vcMetadata.format === VCFormat.mso_mdoc) {
-      const namespaces = verifiableCredential['issuerSigned']['nameSpaces'];
-      Object.keys(namespaces).forEach(namespace => {
-        (namespaces[namespace] as Array<Object>).forEach(element => {
-          availableFieldNames.push(`${namespace}~${element['elementIdentifier']}`);
+      const namespaces = verifiableCredential['issuerSigned']?.['nameSpaces'];
+      if (namespaces) {
+        Object.keys(namespaces).forEach(namespace => {
+          (namespaces[namespace] as Array<Object>).forEach(element => {
+            availableFieldNames.push(`${namespace}~${element['elementIdentifier']}`);
+          });
         });
-      });
+      }
     }
+    console.log('Available field names:', availableFieldNames);
     return availableFieldNames.some(fieldName =>
-      BOTTOM_SECTION_FIELDS_WITH_DETAILED_ADDRESS_FIELDS.includes(fieldName),
+      BOTTOM_SECTION_FIELDS_WITH_DETAILED_ADDRESS_FIELDS.includes(fieldName)
     );
   };
 
-  const renderReadOnlyField = (field: string, value: any) => (
+  const renderReadOnlyField = (field: string, value: string) => (
     <Column key={field} margin="8 0">
-      <Text style={{fontWeight: 'bold', marginBottom: 4}}>
+      <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>
         {field}
       </Text>
       <TextInput
         value={value}
+        editable={false}
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          borderRadius: 6,
+          padding: 10,
+          backgroundColor: '#f5f5f5',
+          color: '#333',
+        }}
+      />
+    </Column>
+  );
+
+  // Enhanced fields, excluding status
+  const enhancedFields = isReceived
+    ? [...props.fields.filter(f => f !== 'status'), 'address']
+    : [...DETAIL_VIEW_BOTTOM_SECTION_FIELDS.filter(f => f !== 'status'), 'address'];
+
+  // Custom render for status with boxed style
+  const [statusText, setStatusText] = useState('Verifying...');
+  useEffect(() => {
+    // Attempt to extract text from VCVerification (placeholder logic)
+    // Note: This assumes VCVerification has a way to get its text; adjust based on its implementation
+    setStatusText('Verified' || 'Pending'); // Replace with actual logic if available
+  }, [verifiableCredentialData.vcMetadata]);
+
+  const renderStatus = () => (
+    <Column key="status" margin="8 0">
+      <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>
+        {getFieldName('status', props.wellknown, verifiableCredentialData.vcMetadata.format)}
+      </Text>
+      <TextInput
+        value={statusText}
         editable={false}
         style={{
           borderWidth: 1,
@@ -88,7 +126,7 @@ export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
       <Column fill>
         {isReceived ? (
           <Column padding="10" backgroundColor={Theme.Colors.DetailedViewBackground}>
-            {props.fields.map(field => {
+            {enhancedFields.map(field => {
               const fieldName = getFieldName(
                 field,
                 props.wellknown,
@@ -102,11 +140,11 @@ export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
                 wellknownDisplayProperty,
                 verifiableCredentialData.vcMetadata.format,
               );
-              if (!fieldValue) return null;
+              console.log(`Field: ${fieldName}, Value: ${fieldValue}, Type: ${typeof fieldValue}, Raw Credential: ${JSON.stringify(credential)}`);
+              if (!fieldValue || typeof fieldValue !== 'string') return null;
               return renderReadOnlyField(fieldName, fieldValue);
             })}
-            {/* Key Type Field */}
-            {renderReadOnlyField(KEY_TYPE_FIELD, keyType)}
+            {renderStatus()}
           </Column>
         ) : (
           <Column padding="10 10 3 10" backgroundColor={Theme.Colors.DetailedViewBackground}>
@@ -136,7 +174,7 @@ export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
                     />
                   </Column>
                 </Column>
-                <Column align="space-evenly" margin="0 0 0 24" style={{flex: 1}}>
+                <Column align="space-evenly" margin="0 0 0 24" style={{ flex: 1 }}>
                   {/* Not shown here since it's not a received card */}
                 </Column>
               </Row>
@@ -152,7 +190,7 @@ export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
               />
               <Column padding="0 14 14 14">
                 {shouldShowHrLine(credential) &&
-                  DETAIL_VIEW_BOTTOM_SECTION_FIELDS.map(field => {
+                  enhancedFields.map(field => {
                     const fieldName = getFieldName(
                       field,
                       props.wellknown,
@@ -166,10 +204,10 @@ export const VCDetailView: React.FC<VCItemDetailsProps> = props => {
                       wellknownDisplayProperty,
                       verifiableCredentialData.vcMetadata.format,
                     );
-                    if (!fieldValue) return null;
+                    if (!fieldValue || typeof fieldValue !== 'string') return null;
                     return renderReadOnlyField(fieldName, fieldValue);
                   })}
-                {renderReadOnlyField(KEY_TYPE_FIELD, keyType)}
+                {renderStatus()}
               </Column>
             </ImageBackground>
           </Column>
@@ -189,6 +227,5 @@ export interface VCItemDetailsProps {
   onBinding?: () => void;
   activeTab?: Number;
   vcHasImage: boolean;
-  keyType: string;
   isReceived?: boolean;
 }
