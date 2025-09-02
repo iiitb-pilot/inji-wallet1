@@ -27,8 +27,6 @@ export const DETAIL_VIEW_DEFAULT_FIELDS = [
   'gender',
   'phone',
   'dateOfBirth',
-  'email',
-  'address',
 ];
 
 //todo UIN & VID to be removed once we get the fields in the wellknown endpoint
@@ -40,14 +38,10 @@ export const DETAIL_VIEW_ADD_ON_FIELDS = [
 ];
 
 export const DETAIL_VIEW_BOTTOM_SECTION_FIELDS = [
-  'email',
-  'address',
   'credentialRegistry',
 ];
 
 export const BOTTOM_SECTION_FIELDS_WITH_DETAILED_ADDRESS_FIELDS = [
-  ...getAddressFields(),
-  'email',
   'credentialRegistry',
 ];
 
@@ -157,17 +151,17 @@ export const getFieldName = (
   return i18n.t(`VcDetails:${field}`);
 };
 
-export function getAddressFields() {
-  return [
-    'addressLine1',
-    'addressLine2',
-    'addressLine3',
-    'city',
-    'province',
-    'region',
-    'postalCode',
-  ];
-}
+// export function getAddressFields() {
+//   return [
+//     'addressLine1',
+//     'addressLine2',
+//     'addressLine3',
+//     'city',
+//     'province',
+//     'region',
+//     'postalCode',
+//   ];
+// }
 
 function getFullAddress(credential: CredentialSubject) {
   if (!credential) {

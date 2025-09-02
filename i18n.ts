@@ -14,17 +14,12 @@ import {iso6393To1} from 'iso-639-3';
 import {getItem} from './machines/store';
 import {LocalizedField} from './machines/VerifiableCredential/VCMetaMachine/vc';
 
-const resources = {en, fil, ar, hi, kn, ta};
+const resources = {en};
 const locale = Localization.locale;
 const languageCodeMap = {} as {[key: string]: string};
 
 export const SUPPORTED_LANGUAGES = {
   en: 'English',
-  fil: 'Filipino',
-  ar: 'عربى',
-  hi: 'हिंदी',
-  kn: 'ಕನ್ನಡ',
-  ta: 'தமிழ்',
 };
 
 i18next
